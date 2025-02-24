@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quy Nhon Weather Forecast</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>🌤️ Quy Nhon Weather Forecast</h1>
+
+        <!-- Phần hiển thị chi tiết -->
+        <div id="detail-container" class="detail-container">
+            <img id="detail-icon" src="" alt="">
+            <div class="detail-text">
+                <h3 id="detail-date"></h3>
+                <p>🌡 <span id="detail-temp"></span>°C</p>
+                <p>💨 <span id="detail-wind"></span> km/h</p>
+                <p>💧 <span id="detail-rhum"></span> %</p>
+            </div>
+        </div>        
+
+        <!-- Danh sách ngày -->
+        <div class="forecast-container">
+            {% for day in next_7_days %}
+            <div class="day-card" id="day-{{ loop.index0 }}" onclick="showDetail({{ loop.index0 }})"> 
+                <h3>{{ day['date'] }}</h3>
+                <img src="{{ url_for('static', filename='icons/' + day['coco_mode_name'] + '.png') }}" alt="Weather Icon">
+                <p>🌡 {{ day['temp_max'] }}°C / {{ day['temp_min'] }}°C</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        var next7Days = {{ next_7_days | tojson }};
+        var selectedCard = null;
+
+        function showDetail(index) {
+            var day = next7Days[index];
+
+            document.getElementById("detail-date").innerText = day.date;
+            document.getElementById("detail-icon").src = "/static/icons/" + day.coco_mode_name + ".png";
+            document.getElementById("detail-temp").innerText = day.temp_max + " / " + day.temp_min;
+            document.getElementById("detail-wind").innerText = day.wspd;
+            document.getElementById("detail-rhum").innerText = day.rhum;
+
+            if (selectedCard) {
+                selectedCard.classList.remove("selected");
+            }
+            selectedCard = document.getElementById("day-" + index);
+            selectedCard.classList.add("selected");
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            if (next7Days.length > 0) {
+                showDetail(0);
+            }
+        });
+    </script>
+
+</body>
+</html>
