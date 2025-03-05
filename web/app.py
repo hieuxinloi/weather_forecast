@@ -1,5 +1,5 @@
-from flask import Flask, render_template
-from utils import get_display_data
+from flask import Flask, render_template, redirect, url_for
+from utils import get_display_data, save_forecast_results
 
 app = Flask(__name__)
 
@@ -23,6 +23,11 @@ def index():
         day["coco_mode_name"] = COCO_MAPPING.get(day["coco_mode"], "unknown")
 
     return render_template("index.html", last_7_days=last_7_days, next_7_days=next_7_days)
+
+@app.route("/update")
+def update_forecast():
+    save_forecast_results()
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)

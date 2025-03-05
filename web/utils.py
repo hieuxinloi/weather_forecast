@@ -7,7 +7,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent  
 
-# Load scaler và mô hình
+# Load scaler and models
 scaler_path = BASE_DIR / "models/scalers/scaler.pkl"
 lstm_model_path = BASE_DIR / "models/best_forecast_model"
 xgb_model_path = BASE_DIR / "models/best_cls_model/xgb_model.json"
@@ -17,15 +17,18 @@ lstm_model = tf.keras.models.load_model(lstm_model_path)
 xgb_model = xgb.XGBClassifier()
 xgb_model.load_model(str(xgb_model_path))
 
-# Danh sách các feature cần dùng
+# features
 features = ['temp', 'dwpt', 'rhum', 'prcp', 'wdir', 'wspd', 'pres']
 
-# Load dữ liệu thời tiết
+# Load weather data
 data_path = BASE_DIR / "data/processed/weatherQN_2021_2025_processed.csv"
 data = pd.read_csv(data_path, parse_dates=["time"])
 data.set_index("time", inplace=True)
 
-# Hàm dự báo 7 ngày tiếp theo bằng LSTM
+# predicted results path
+results_path = BASE_DIR / "data/results/results.csv"
+
+# forecast next 7 days
 def forecast_next_7_days():
     last_input = data[-56:][features].values.reshape(1, 56, len(features))
     predictions = []
@@ -42,7 +45,7 @@ def forecast_next_7_days():
     df_predictions = pd.DataFrame(predictions_original, columns=features, index=future_dates)
     return df_predictions
 
-# Hàm phân loại `coco` sử dụng XGBoost
+# classify coco
 def classify_coco(dataframe):
     if 'coco' in dataframe.columns:
         dataframe = dataframe.drop(columns=['coco'])
@@ -62,7 +65,7 @@ def classify_coco(dataframe):
     dataframe['coco'] = coco_preds
     return dataframe
 
-# Hàm tóm tắt dữ liệu theo ngày
+# summarize daily data
 def summarize_daily_data(df):
     df = df.copy()
 
@@ -72,8 +75,8 @@ def summarize_daily_data(df):
     daily_summary = df.resample('D').agg({
         'temp': ['max', 'min'],
         'coco': lambda x: x.mode()[0] if not x.mode().empty else np.nan,
-        'rhum': 'mean',   # Lấy trung bình độ ẩm
-        'wspd': 'mean'    # Lấy trung bình tốc độ gió
+        'rhum': 'mean', 
+        'wspd': 'mean'   
     })
 
     daily_summary.columns = ['temp_max', 'temp_min', 'coco_mode', 'rhum', 'wspd']
@@ -84,23 +87,29 @@ def summarize_daily_data(df):
     daily_summary['rhum'] = daily_summary['rhum'].round().astype(int) 
     daily_summary['wspd'] = daily_summary['wspd'].round().astype(int)  
 
-    daily_summary.rename(columns={'index': 'time'}, inplace=True)
     return daily_summary
 
-# Hàm lấy dữ liệu hiển thị cho trang web
+# save results
+def save_forecast_results():
+    df_forecast = forecast_next_7_days()
+    df_forecast = classify_coco(df_forecast)
+    df_forecast = df_forecast.reset_index().rename(columns={'index': 'time'}) # reset index to time
+    df_forecast.to_csv(results_path, index=False)
+
+# get display data
 def get_display_data():
     last_7_days = summarize_daily_data(data[-56:])
-    next_7_days = summarize_daily_data(classify_coco(forecast_next_7_days()))
 
-    # Kiểm tra cột 'time' trước khi truy cập
-    if 'time' in last_7_days.columns:
-        last_7_days['date'] = last_7_days['time'].dt.strftime("%a, %d/%m")
-    else:
-        last_7_days['date'] = ["N/A"] * len(last_7_days)
+    if not results_path.exists():
+        save_forecast_results()
 
-    if 'time' in next_7_days.columns:
-        next_7_days['date'] = next_7_days['time'].dt.strftime("%a, %d/%m")
-    else:
-        next_7_days['date'] = ["N/A"] * len(next_7_days)
+    full_forecast = pd.read_csv(results_path, parse_dates=["time"])
+    full_forecast.set_index("time", inplace=True)
+
+    next_7_days = summarize_daily_data(full_forecast)
+
+    last_7_days['date'] = last_7_days['time'].dt.strftime("%a, %d/%m")
+    next_7_days['date'] = next_7_days['time'].dt.strftime("%a, %d/%m")
 
     return last_7_days.to_dict(orient="records"), next_7_days.to_dict(orient="records")
+
