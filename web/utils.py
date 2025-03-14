@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load scaler and models
 scaler_path = BASE_DIR / "models/scalers/scaler.pkl"
 lstm_model_path = BASE_DIR / "models/best_forecast_model"
-xgb_model_path = BASE_DIR / "models/best_cls_model/xgb_model.json"
+xgb_model_path = BASE_DIR / "models/best_cls_model/xgboost_model.json"
 
 scaler = joblib.load(scaler_path)
 lstm_model = tf.keras.models.load_model(lstm_model_path)
@@ -100,8 +100,7 @@ def save_forecast_results():
 def get_display_data():
     last_7_days = summarize_daily_data(data[-56:])
 
-    if not results_path.exists():
-        save_forecast_results()
+    save_forecast_results()
 
     full_forecast = pd.read_csv(results_path, parse_dates=["time"])
     full_forecast.set_index("time", inplace=True)

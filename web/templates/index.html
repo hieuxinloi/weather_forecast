@@ -11,7 +11,6 @@
     <div class="container">
         <h1>🌤️ Quy Nhon Weather Forecast</h1>
 
-        <!-- Phần hiển thị chi tiết -->
         <div id="detail-container" class="detail-container">
             <img id="detail-icon" src="" alt="">
             <div class="detail-text">
@@ -19,10 +18,10 @@
                 <p>🌡 <span id="detail-temp"></span>°C</p>
                 <p>💨 <span id="detail-wind"></span> km/h</p>
                 <p>💧 <span id="detail-rhum"></span> %</p>
+                <p>🌈 <span id="detail-coco"></span></p>
             </div>
         </div>        
 
-        <!-- Danh sách ngày -->
         <div class="forecast-container">
             {% for day in next_7_days %}
             <div class="day-card" id="day-{{ loop.index0 }}" onclick="showDetail({{ loop.index0 }})"> 
@@ -46,6 +45,7 @@
             document.getElementById("detail-temp").innerText = day.temp_max + " / " + day.temp_min;
             document.getElementById("detail-wind").innerText = day.wspd;
             document.getElementById("detail-rhum").innerText = day.rhum;
+            document.getElementById("detail-coco").innerText = day.coco_mode_name;
 
             if (selectedCard) {
                 selectedCard.classList.remove("selected");
