@@ -19,6 +19,7 @@ The **Weather Forecast** project is a web application for weather prediction usi
 ```bash
 weather_forecast/
 │── data/                        # Weather data (raw & processed & results)
+│── images/                      # Images to write readme.md
 │── models/                      # Forecast & Classification models
 │── notebooks/                   # Notebooks for data processing & training
 │── web/                         # Flask web app code
@@ -51,3 +52,7 @@ cd web
 python app.py
 ```
 Open your browser and visit: http://127.0.0.1:5000/
+
+## Web Preview
+
+![UI Preview](/images/ui_preview.png)
